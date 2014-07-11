@@ -1,0 +1,8 @@
+name: SimpleParkour
+main: me.shadow5353.simpleparkour.SimpleParkour
+version: 0.1
+
+commands:
+    parkour:
+        usage: /<command> <argument>
+        aliases: [p]
