@@ -1,7 +1,10 @@
 package me.shadow5353.simpleparkour;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
+import net.milkbowl.vault.economy.Economy;
+import net.milkbowl.vault.economy.EconomyResponse;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -20,6 +23,7 @@ import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.Vector;
 
@@ -28,9 +32,24 @@ public class SimpleParkour extends JavaPlugin implements Listener{
 	MessageManager msg = MessageManager.getInstance();
 	ArrayList<Player> player = new ArrayList<Player>();
 	private ArrayList<Player> jumpers = new ArrayList<Player>();
+	HashMap<Player, String> Play = new HashMap<Player, String>();
 	public void onEnable(){
 		settings.setup(this);
 		Bukkit.getServer().getPluginManager().registerEvents(this, this);
+	}
+
+	public static Economy econ = null;
+
+	private boolean setupEconomy() {
+		if (getServer().getPluginManager().getPlugin("Vault") == null) {
+			return false;
+		}
+		RegisteredServiceProvider<Economy> rsp = getServer().getServicesManager().getRegistration(Economy.class);
+		if (rsp == null) {
+			return false;
+		}
+		econ = rsp.getProvider();
+		return econ != null;
 	}
 	
 	public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args){
@@ -42,11 +61,8 @@ public class SimpleParkour extends JavaPlugin implements Listener{
 			if(args.length == 0){
 				sender.sendMessage(ChatColor.YELLOW + "--------------------------------------------------");
 				sender.sendMessage(ChatColor.GOLD + "/parkour" + ChatColor.BLACK + " : " + ChatColor.YELLOW + "Show a list of commands"); //Done
-				sender.sendMessage(ChatColor.GOLD + "/parkour stats" + ChatColor.BLACK + " : " + ChatColor.YELLOW + "Show your parkour stats");
-				sender.sendMessage(ChatColor.GOLD + "/parkour list" + ChatColor.BLACK + " : " + ChatColor.YELLOW + "Show a list parkour course");
 				sender.sendMessage(ChatColor.GOLD + "/parkour join <name>" + ChatColor.BLACK + " : " + ChatColor.YELLOW + "Join a parkour course"); //Done
 				sender.sendMessage(ChatColor.GOLD + "/parkour leave" + ChatColor.BLACK + " : " + ChatColor.YELLOW + "Leave a parkour course"); //Done
-				sender.sendMessage(ChatColor.GOLD + "/parkour lobby" + ChatColor.BLACK + " : " + ChatColor.YELLOW + "Leave a parkour course");
 				sender.sendMessage(ChatColor.GOLD + "/parkour rest" + ChatColor.BLACK + " : " + ChatColor.YELLOW + "Resets your checkpoint"); //done
 				sender.sendMessage(ChatColor.GOLD + "/parkour return" + ChatColor.BLACK + " : " + ChatColor.YELLOW + "Return to your last checkpoint"); //done
 				if(sender.hasPermission("parkour.admin")){
@@ -54,6 +70,7 @@ public class SimpleParkour extends JavaPlugin implements Listener{
 					sender.sendMessage(ChatColor.GOLD + "/parkour create <name>" + ChatColor.BLACK + " : " + ChatColor.YELLOW + "Create a parkour course"); //Done
 					sender.sendMessage(ChatColor.GOLD + "/parkour remove <name>" + ChatColor.BLACK + " : " + ChatColor.YELLOW + "Remove a parkour course"); //Done
 					sender.sendMessage(ChatColor.GOLD + "/parkour setstart <name>" + ChatColor.BLACK + " : " + ChatColor.YELLOW + "Set start location for a course"); //Done
+					sender.sendMessage(ChatColor.GOLD + "/parkour setreward <name> <reward>" + ChatColor.BLACK + " : " + ChatColor.YELLOW + "Set a reward for a course"); //Done
 					sender.sendMessage(ChatColor.GOLD + "/parkour setlobby" + ChatColor.BLACK + " : " + ChatColor.YELLOW + "Set lobby location"); //Done
 					sender.sendMessage(ChatColor.GOLD + "/parkour reload" + ChatColor.BLACK + " : " + ChatColor.YELLOW + "Reloads the storage"); //Done
 					}
@@ -61,40 +78,7 @@ public class SimpleParkour extends JavaPlugin implements Listener{
 				
 				return true;
 			}
-			if(args[0].equalsIgnoreCase("stats")){
-				if(!(sender instanceof Player)){
-					msg.error(sender, "Only players can use this command");
-					return true;
-				}
-				Player p = (Player) sender;
-				if(!(p.hasPermission("simpleparkour.stats"))){
-					msg.perm(p);
-					return true;
-				}
-				StringBuilder stbl = new StringBuilder();
-				String uuid = p.getUniqueId().toString();
-				
-				p.sendMessage(ChatColor.YELLOW + "------------------" + ChatColor.BLACK + " [" + ChatColor.GOLD + "Stats" + ChatColor.BLACK + "] " + ChatColor.YELLOW + "------------------");
-				p.sendMessage(ChatColor.GOLD + "Player name: " + ChatColor.YELLOW + p.getName());
-				p.sendMessage(ChatColor.GOLD + "Course played: " + ChatColor.YELLOW + settings.getStats().getInt("stats." + uuid + ".played"));
-				p.sendMessage(ChatColor.GOLD + "Course completed: " + ChatColor.YELLOW + settings.getStats().getInt("stats." + uuid + ".completed"));
-				p.sendMessage(ChatColor.GOLD + "Course left: " + ChatColor.YELLOW + settings.getStats().getInt("stats." + uuid + ".left"));
-				p.sendMessage(ChatColor.YELLOW + "-------------------------------------------");
-				return true;
-				//Maybe more to add here
-			}
-			if(args[0].equalsIgnoreCase("list")){
-				if(!(sender instanceof Player)){
-					msg.error(sender, "Only players can use this command");
-					return true;
-				}
-				Player p = (Player) sender;
-				if(!(p.hasPermission("simpleparkour.list"))){
-					msg.perm(p);
-					return true;
-				}
-				//More to add here
-			}
+
 			if(args[0].equalsIgnoreCase("join")){
 				if(!(sender instanceof Player)){
 					msg.error(sender, "Only players can use this command");
@@ -128,8 +112,6 @@ public class SimpleParkour extends JavaPlugin implements Listener{
 				
 				Location loc = new Location(world, x, y, z, yaw, pitch);
 				p.teleport(loc);
-				String uuid = p.getUniqueId().toString();
-				settings.getStats().set("stats." + uuid + ".played", + 1);
 				msg.good(p, "You have joined " + name + "!");
 				return true;
 			}
@@ -160,32 +142,6 @@ public class SimpleParkour extends JavaPlugin implements Listener{
 				Location loc = new Location(world, x, y, z, yaw, pitch);
 				p.teleport(loc);
 				msg.good(p, "You have been teleported to the lobby!");
-				return true;
-			}
-			if(args[0].equalsIgnoreCase("lobby")){
-				if(!(sender instanceof Player)){
-					msg.error(sender, "Only players can use this command");
-					return true;
-				}
-				Player p = (Player) sender;
-				if(!(p.hasPermission("simpleparkour.lobby"))){
-					msg.perm(p);
-					return true;
-				}
-				
-				World world = Bukkit.getServer().getWorld(settings.getParkour().getString("lobby.world"));
-				int x = settings.getParkour().getInt("lobby.x");
-				int y = settings.getParkour().getInt("lobby.y");
-				int z = settings.getParkour().getInt("lobby.z");
-				int yaw = settings.getParkour().getInt("lobby.yaw");
-				int pitch = settings.getParkour().getInt("lobby.pitch");
-				
-				Location loc = new Location(world, x, y, z, yaw, pitch);
-				p.teleport(loc);
-				msg.good(p, "You have left a parkour course!");
-				msg.info(p, "There have been removed a point from your stats!");
-				String uuid = p.getUniqueId().toString();
-				settings.getStats().set("stats." + uuid + ".completed", - 1);
 				return true;
 			}
 			if(args[0].equalsIgnoreCase("reset")){
@@ -263,9 +219,8 @@ public class SimpleParkour extends JavaPlugin implements Listener{
 					msg.error(p, name + " do already exist");
 					return true;
 				}
-				
-				settings.getParkour().set("parkour.list", name);
 				settings.getParkour().set("parkour." + name + ".name", name);
+				settings.getParkour().set("parkour." + name + ".reward", "");
 				settings.getParkour().set("parkour." + name + ".start" + ".world", p.getWorld().getName());
 				settings.getParkour().set("parkour." + name + ".start" + ".x", p.getLocation().getX());
 				settings.getParkour().set("parkour." + name + ".start" + ".y", p.getLocation().getY());
@@ -297,7 +252,7 @@ public class SimpleParkour extends JavaPlugin implements Listener{
 					msg.error(p, name + "does not exist");
 					return true;
 				}
-				
+				settings.getParkour().set("parkour." + name + ".name", name);
 				settings.getParkour().set("parkour." + name + ".start" + ".world", p.getWorld().getName());
 				settings.getParkour().set("parkour." + name + ".start" + ".x", p.getLocation().getX());
 				settings.getParkour().set("parkour." + name + ".start" + ".y", p.getLocation().getY());
@@ -328,6 +283,37 @@ public class SimpleParkour extends JavaPlugin implements Listener{
 				settings.saveParkour();
 				
 				msg.good(p, "New lobby location set!");
+			}
+			if(args[0].equalsIgnoreCase("setreward")){
+				if(!(sender instanceof Player)){
+					msg.error(sender, "Only players can use this command");
+					return true;
+				}
+				Player p = (Player) sender;
+				if(!(p.hasPermission("simpleparkour.setreward"))){
+					msg.perm(p);
+					return true;
+				}
+
+				if(args.length == 1){
+					msg.error(p, "Please specify a course!");
+					return true;
+				}
+				String name = args[1];
+				if(settings.getParkour().getString("parkour." + name + ".name") == null){
+					msg.error(p, name + " do not exist");
+					return true;
+				}
+				if(args.length == 2){
+					msg.error(p, "Please specify a reward for this course!");
+					return true;
+				}
+				String reward = args[2];
+
+				settings.getParkour().set("parkour." + name + ".reward", reward);
+				settings.saveParkour();
+				msg.good(p, "You have set the reward to " + reward + " for " + name + "!");
+				return true;
 			}
 			if(args[0].equalsIgnoreCase("remove")){
 				if(!(sender instanceof Player)){
@@ -428,31 +414,39 @@ public class SimpleParkour extends JavaPlugin implements Listener{
 			 }
 			 if(s.getLine(1).equalsIgnoreCase("§4Finish")){
 				 Player p = e.getPlayer();
+				 String uuid = p.getUniqueId().toString();
 				 if(!(player.contains(e.getPlayer()))) {
 					 msg.error(p, "You are not in a parkour course!");
 					 return;
 				 }
 		           
-		        player.remove(p);
-					
-				World world = Bukkit.getServer().getWorld(settings.getParkour().getString("lobby.world"));
-				int x = settings.getParkour().getInt("lobby.x");
-				int y = settings.getParkour().getInt("lobby.y");
-				int z = settings.getParkour().getInt("lobby.z");
-				int yaw = settings.getParkour().getInt("lobby.yaw");
-				int pitch = settings.getParkour().getInt("lobby.pitch");
-					
-				Location loc = new Location(world, x, y, z, yaw, pitch);
-			    p.teleport(loc);
-		        p.sendMessage(ChatColor.YELLOW + "-------------------------------------------");
-				p.sendMessage(ChatColor.GOLD + "You have completed a parkour course!");
-				p.sendMessage(ChatColor.GOLD + "There have been added 10 points!");
-				p.sendMessage(ChatColor.YELLOW + "-------------------------------------------");
-				String uuid = p.getUniqueId().toString();
-				settings.getStats().set("stats." + uuid + ".points", + 10);
-				settings.getStats().set("stats." + uuid + ".completed", + 1);
-				settings.saveStats();
-				return;
+		         player.remove(p);
+				 settings.getData().set("coords." + uuid + ".enable", "false");
+				 settings.getData().set("coords." + uuid + ".course", "");
+				 settings.getData().set("coords." + uuid + ".world", "");
+				 settings.getData().set("coords." + uuid + ".x", "");
+				 settings.getData().set("coords." + uuid + ".y", "");
+				 settings.getData().set("coords." + uuid + ".z", "");
+				 settings.getData().set("coords." + uuid + ".yaw", "");
+				 settings.getData().set("coords." + uuid + ".pitch", "");
+				 settings.saveData();
+				 World world = Bukkit.getServer().getWorld(settings.getParkour().getString("lobby.world"));
+				 int x = settings.getParkour().getInt("lobby.x");
+				 int y = settings.getParkour().getInt("lobby.y");
+				 int z = settings.getParkour().getInt("lobby.z");
+				 int yaw = settings.getParkour().getInt("lobby.yaw");
+				 int pitch = settings.getParkour().getInt("lobby.pitch");
+
+				 Location loc = new Location(world, x, y, z, yaw, pitch);
+			     p.teleport(loc);
+				 String name = settings.getData().getString("coords." + uuid + ".course");
+				 Double reward = settings.getParkour().getDouble("parkour." + name + ".reward");
+				 p.sendMessage(ChatColor.YELLOW + "-------------------------------------------");
+				 p.sendMessage(ChatColor.GOLD + "You have completed a parkour course!");
+				 p.sendMessage(ChatColor.GOLD + "There have been added " + reward + " money to your account!");
+				 p.sendMessage(ChatColor.YELLOW + "-------------------------------------------");
+				 EconomyResponse r = econ.depositPlayer(p.getName(), reward);
+				 return;
 			 }
 		 }
 	 }
