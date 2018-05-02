@@ -12,7 +12,6 @@ A simple parkour plugin
 - /parkour create <name> : Create a parkour course : chaosparkour.create
 - /parkour remove <name> : Remove a parkour course : chaosparkour.remove
 - /parkour setstart <name> : Set start for a parkour course : chaosparkour.setstart
-- /parkour setreward <name> : Set reward for a parkour course : chaosparkour.return
 - /parkour setlobby : Set lobby, where players gets teleported when they are done : chaosparkour.setlobby
 
 ## Signs
