@@ -1,4 +1,4 @@
-package me.shadow5353.simpleparkour;
+package me.shadow5353.simpleparkour.managers;
 
 import java.io.File;
 import java.io.IOException;

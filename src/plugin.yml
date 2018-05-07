@@ -1,6 +1,7 @@
 name: SimpleParkour
 main: me.shadow5353.simpleparkour.SimpleParkour
-version: 1.0
+version: 1.0.1
+description: A simple parkour plugin
 
 commands:
     parkour:
