@@ -19,3 +19,7 @@ A simple parkour plugin
 - Checkpoint sign: Add %checkpoint% at the top
 - End sign: Add %end% at the top.
 - Join sign: Add %end% at the top and course name at the end
+
+# Todo
+- Add custom rewards
+- Add menu to join
