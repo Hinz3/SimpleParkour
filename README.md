@@ -16,4 +16,6 @@ A simple parkour plugin
 
 ## Signs
 
-- There are two signs, checkpoint & finish, to make a checkpoint sign, write "%checkpoint%" in the first line, and the finish sign, write "%end%" in the first line.
+- Checkpoint sign: Add %checkpoint% at the top
+- End sign: Add %end% at the top.
+- Join sign: Add %end% at the top and course name at the end
