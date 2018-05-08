@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import me.shadow5353.simpleparkour.listeners.CreateSigns;
+import me.shadow5353.simpleparkour.listeners.Items;
 import me.shadow5353.simpleparkour.listeners.PlayerDamage;
 import me.shadow5353.simpleparkour.listeners.SignInteract;
 import me.shadow5353.simpleparkour.managers.CommandManager;
@@ -37,6 +38,7 @@ public class SimpleParkour extends JavaPlugin implements Listener{
 		Bukkit.getServer().getPluginManager().registerEvents(new CreateSigns(), this);
 		Bukkit.getServer().getPluginManager().registerEvents(new SignInteract(), this);
 		Bukkit.getServer().getPluginManager().registerEvents(new PlayerDamage(), this);
+		Bukkit.getServer().getPluginManager().registerEvents(new Items(), this);
 	}
 
 	public static Plugin getPlugin() {
