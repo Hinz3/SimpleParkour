@@ -1,5 +1,6 @@
 package me.shadow5353.simpleparkour.managers;
 
+import org.bukkit.GameMode;
 import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
@@ -25,6 +26,8 @@ public class GameManager {
     public void addPlayer(Player player) {
         if (!(getPlayer(player))) {
             players.add(player);
+
+            player.setGameMode(GameMode.SURVIVAL);
         }
      }
 
