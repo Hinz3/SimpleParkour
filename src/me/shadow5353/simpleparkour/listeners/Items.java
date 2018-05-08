@@ -25,8 +25,12 @@ public class Items implements Listener {
 
         if (!(event.getAction() == Action.RIGHT_CLICK_AIR)) return;
         if (!(game.getPlayer(player))) return;
-        if (!(event.getItem().getType() == Material.EMERALD));
+        if (event.getItem().getType() == Material.EMERALD) {
+            player.performCommand("p return");
+        } else if (event.getItem().getType() == Material.REDSTONE) {
+            player.performCommand("p leave");
+        }
 
-        player.performCommand("p return");
+
     }
 }

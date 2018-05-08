@@ -52,12 +52,24 @@ public class GameManager {
 
             ArrayList<String> loreReturnItem = new ArrayList<>();
 
-            loreReturnItem.add(ChatColor.DARK_PURPLE + "Right click into air to return to your checkpoint");
+            loreReturnItem.add(ChatColor.DARK_PURPLE + "Right click to return to your checkpoint");
 
             returnItemMeta.setLore(loreReturnItem);
             returnItem.setItemMeta(returnItemMeta);
 
+            ItemStack endItem = new ItemStack(Material.REDSTONE, 1);
+            ItemMeta endItemMeta = returnItem.getItemMeta();
+            endItemMeta.setDisplayName(ChatColor.GOLD + "Leave Course");
+
+            ArrayList<String> loreEndItem = new ArrayList<>();
+
+            loreReturnItem.add(ChatColor.DARK_PURPLE + "Right click to leave course");
+
+            endItemMeta.setLore(loreEndItem);
+            endItem.setItemMeta(endItemMeta);
+
             player.getInventory().addItem(returnItem);
+            player.getInventory().addItem(endItem);
         }
      }
 
